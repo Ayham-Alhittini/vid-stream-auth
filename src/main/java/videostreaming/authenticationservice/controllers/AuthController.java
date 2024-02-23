@@ -1,14 +1,29 @@
 package videostreaming.authenticationservice.controllers;
 
+import com.auth0.jwt.exceptions.JWTVerificationException;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.validation.annotation.Validated;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import videostreaming.authenticationservice.data.AppUserRepository;
+import videostreaming.authenticationservice.dto.LoginDto;
+import videostreaming.authenticationservice.dto.RegisterDto;
+import videostreaming.authenticationservice.dto.UserDto;
 import videostreaming.authenticationservice.models.AppUser;
+import videostreaming.authenticationservice.utilities.JWTUtility;
+import videostreaming.authenticationservice.utilities.Mapper;
+
+import static org.springframework.http.HttpHeaders.AUTHORIZATION;
 
 @RestController
 @RequestMapping("/api/auth")
+@Validated
 public class AuthController {
 
     private final AppUserRepository appUserRepository;
@@ -18,17 +33,73 @@ public class AuthController {
         this.appUserRepository = appUserRepository;
     }
 
-    @GetMapping("/test")
-    public AppUser test() {
+    @PostMapping("/register")
+    public ResponseEntity<?> register(@Valid @RequestBody RegisterDto registerDto) {
 
-        AppUser user = new AppUser("Ayham-Alhettini", "Ayham", "ayham.hittini268@gmail.com", "Pa$$w0rd");
+        if (checkUserNameIsTaken(registerDto))
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body("Username is already taken.");
 
-        appUserRepository.save(user);
+        if (checkEmailUsedBefore(registerDto))
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body("Email already used by other user.");
 
-        return user;
+        AppUser appUser = Mapper.mapRegisterDtoToAppUser(registerDto);
+
+        appUserRepository.save(appUser);
+
+        String token = JWTUtility.createToken(appUser.getUserName());
+
+        UserDto userDto = Mapper.mapAppUserToUserDto(appUser, token);
+
+        return ResponseEntity.ok( userDto );
     }
 
+    @PostMapping("/login")
+    public ResponseEntity<?> login(@RequestBody LoginDto loginDto) {
 
+        AppUser appUser = appUserRepository.findAppUserByLoginProvider( loginDto.loginProvider );
 
+        if (appUser == null)
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                .body("Invalid Credentials");
+
+        if (!appUser.getPassword().equals(loginDto.password))
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body("Invalid Credentials");
+
+        String token = JWTUtility.createToken(appUser.getUserName());
+
+        UserDto userDto = Mapper.mapAppUserToUserDto(appUser, token);
+
+        return ResponseEntity.ok( userDto );
+    }
+
+    @PostMapping("/verify")
+    public ResponseEntity<Boolean> verify(HttpServletRequest request) {
+
+        try {
+            String authorizationHeader = request.getHeader(AUTHORIZATION);
+
+            String userName = JWTUtility.extractUserNameFromToken(authorizationHeader);
+
+            AppUser appUser = appUserRepository.findAppUserByUserName(userName);
+
+            return appUser != null ? ResponseEntity.ok(true) :
+                    ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(false);
+
+        } catch (JWTVerificationException e) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(false);
+        }
+    }
+
+    /// validations
+    private boolean checkUserNameIsTaken(RegisterDto registerDto) {
+        return appUserRepository.findAppUserByLoginProvider(registerDto.userName) != null;
+    }
+
+    private boolean checkEmailUsedBefore(RegisterDto registerDto) {
+        return appUserRepository.findAppUserByLoginProvider(registerDto.email) != null;
+    }
 
 }
