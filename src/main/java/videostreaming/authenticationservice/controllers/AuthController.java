@@ -7,10 +7,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 import videostreaming.authenticationservice.data.AppUserRepository;
 import videostreaming.authenticationservice.dto.LoginDto;
 import videostreaming.authenticationservice.dto.RegisterDto;
@@ -75,7 +72,7 @@ public class AuthController {
         return ResponseEntity.ok( userDto );
     }
 
-    @PostMapping("/verify")
+    @GetMapping("/verify")
     public ResponseEntity<Boolean> verify(HttpServletRequest request) {
 
         try {
@@ -91,6 +88,18 @@ public class AuthController {
         } catch (JWTVerificationException e) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(false);
         }
+    }
+
+    @GetMapping("/get-username-from-token")
+    public ResponseEntity<String> getUsernameFromToken(HttpServletRequest request) {
+
+        try {
+            String userName = JWTUtility.extractUserNameFromToken( request.getHeader(AUTHORIZATION) );
+            return ResponseEntity.ok( userName );
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(null);
+        }
+
     }
 
     /// validations
