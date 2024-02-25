@@ -1,6 +1,5 @@
 package videostreaming.authenticationservice.controllers;
 
-import com.auth0.jwt.exceptions.JWTVerificationException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -53,17 +52,17 @@ public class AuthController {
     }
 
     @PostMapping("/login")
-    public ResponseEntity<?> login(@RequestBody LoginDto loginDto) {
+    public ResponseEntity<UserDto> login(@RequestBody LoginDto loginDto) {
 
         AppUser appUser = appUserRepository.findAppUserByLoginProvider( loginDto.loginProvider );
 
         if (appUser == null)
             return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                .body("Invalid Credentials");
+                .body(null);
 
         if (!appUser.getPassword().equals(loginDto.password))
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                    .body("Invalid Credentials");
+                    .body(null);
 
         String token = JWTUtility.createToken(appUser.getUserName());
 
@@ -85,7 +84,7 @@ public class AuthController {
             return appUser != null ? ResponseEntity.ok(true) :
                     ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(false);
 
-        } catch (JWTVerificationException e) {
+        } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(false);
         }
     }
