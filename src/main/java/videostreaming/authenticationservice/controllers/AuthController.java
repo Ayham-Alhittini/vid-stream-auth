@@ -19,6 +19,7 @@ import static org.springframework.http.HttpHeaders.AUTHORIZATION;
 
 @RestController
 @RequestMapping("/api/auth")
+@CrossOrigin(origins = "*")
 @Validated
 public class AuthController {
 
@@ -57,7 +58,7 @@ public class AuthController {
         AppUser appUser = appUserRepository.findAppUserByLoginProvider( loginDto.loginProvider );
 
         if (appUser == null)
-            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                 .body(null);
 
         if (!appUser.getPassword().equals(loginDto.password))

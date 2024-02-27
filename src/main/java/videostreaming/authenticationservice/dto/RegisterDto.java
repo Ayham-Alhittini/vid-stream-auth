@@ -5,7 +5,7 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Pattern;
 
 public class RegisterDto {
-    @Pattern(regexp = "^[a-zA-Z\\d](?:[a-zA-Z\\d]|-(?=[a-zA-Z\\d])){0,38}$",
+    @Pattern(regexp = "^(?:\\d+[a-zA-Z\\d]|(?:[a-zA-Z\\d]|-(?=[a-zA-Z\\d])){1,38})$",
             message = "You allowed to use alphanumeric character and hyphens")
     public String userName;
 
