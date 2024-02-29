@@ -17,7 +17,7 @@ public class JWTUtility {
 
     public static String createToken(String username) {
         Date now = new Date();
-        long expirationTimeInMs = 24 * 60 * 60 * 1000;//one day
+        long expirationTimeInMs = 3 * 24 * 60 * 60 * 1000;//three days
         Date expirationDate = new Date(System.currentTimeMillis() + expirationTimeInMs);
 
         Algorithm algorithm = Algorithm.HMAC256(secret);

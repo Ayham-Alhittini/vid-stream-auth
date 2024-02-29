@@ -15,7 +15,7 @@ public class RegisterDto {
     @Email(message = "expect email")
     public String email;
 
-    @Pattern(regexp = "^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)(?=.*[@$!%*?&])[A-Za-z\\d@$!%*?&]{8,}$",
+    @Pattern(regexp = "^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)(?=.*[!@#$%^&*])[A-Za-z\\d!@#$%^&*]{8,}$",
             message = "include at least one lowercase letter, one uppercase letter, one digit, and one special character, with a minimum length of 8 characters.")
     public String password;
 }

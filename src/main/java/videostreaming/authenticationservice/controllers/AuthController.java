@@ -2,12 +2,14 @@ package videostreaming.authenticationservice.controllers;
 
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
+import org.apache.coyote.Response;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import videostreaming.authenticationservice.data.AppUserRepository;
+import videostreaming.authenticationservice.dto.ChangePasswordDto;
 import videostreaming.authenticationservice.dto.LoginDto;
 import videostreaming.authenticationservice.dto.RegisterDto;
 import videostreaming.authenticationservice.dto.UserDto;
@@ -100,6 +102,56 @@ public class AuthController {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(null);
         }
 
+    }
+
+
+    /// Extra endpoints
+
+    @PutMapping("/change-password")
+    public ResponseEntity<?> changePassword(HttpServletRequest request, @Valid @RequestBody ChangePasswordDto changePasswordDto) {
+        try {
+            String authorizationHeader = request.getHeader(AUTHORIZATION);
+
+            String userName = JWTUtility.extractUserNameFromToken(authorizationHeader);
+
+            AppUser appUser = appUserRepository.findAppUserByUserName(userName);
+            if (appUser == null) return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+
+            if (!appUser.getPassword().equals(changePasswordDto.oldPassword))
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Password not correct.");
+
+            appUser.setPassword(changePasswordDto.newPassword);
+
+            appUserRepository.save(appUser);
+
+            return ResponseEntity.ok().build();
+
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
+    }
+
+    @PutMapping("/update-profile")
+    public ResponseEntity<Void> updateProfile(HttpServletRequest request, @RequestParam String knownAs) {
+        try {
+            String authorizationHeader = request.getHeader(AUTHORIZATION);
+
+            String userName = JWTUtility.extractUserNameFromToken(authorizationHeader);
+
+            AppUser appUser = appUserRepository.findAppUserByUserName(userName);
+
+            if (appUser == null)
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+
+            appUser.setKnownAs(knownAs);
+
+            appUserRepository.save(appUser);
+
+            return ResponseEntity.ok().build();
+
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
     }
 
     /// validations
